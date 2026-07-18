@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENGLISH QUEST</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg1:#eef4ff; --bg2:#fff0f8;
+  --surface:#ffffff;
+  --text:#2b2650;
+  --muted:#8b87a8;
+  --blue:#3b82f6; --pink:#ff3d81; --amber:#ffb703; --green:#22c55e; --violet:#8b5cf6; --red:#ff4757;
+  --font-display:'Baloo 2', sans-serif;
+  --font-sans:'Inter', system-ui, sans-serif;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; min-height:100vh; display:flex; justify-content:center; align-items:center;
+  font-family:var(--font-sans); color:var(--text);
+  background:
+    radial-gradient(circle at 10% 15%, #cfe3ff 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, #ffd6ec 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, #fff3c4 0%, transparent 45%),
+    linear-gradient(160deg, var(--bg1), var(--bg2));
+}
+.screen{
+  background:var(--surface);
+  border-radius:28px;
+  width:95%; max-width:420px;
+  padding:30px 26px; text-align:center; display:none;
+  box-shadow:0 20px 45px -15px rgba(59,130,246,.25), 0 4px 0 #dbe6ff;
+}
+h1{ font-family:var(--font-display); font-weight:800; font-size:24px; color:var(--text); margin:0 0 12px; }
+p{ color:var(--muted); font-size:14px; line-height:1.5; }
+input#player-name{
+  font-family:var(--font-sans); padding:13px 16px; width:80%; border-radius:14px;
+  border:2px solid #e3e8f7; background:#f7f9ff; color:var(--text); margin-bottom:14px; font-size:15px;
+}
+input#player-name:focus-visible{ outline:none; border-color:var(--blue); }
+
+.btn{
+  font-family:var(--font-display); font-weight:700; font-size:15px;
+  padding:13px 22px; margin:6px; border:none; border-radius:16px; cursor:pointer;
+  color:white; background:var(--blue);
+  box-shadow:0 4px 0 #2563eb; transition:transform .12s ease, box-shadow .12s ease;
+}
+.btn:hover{ transform:translateY(-2px); }
+.btn:active{ transform:translateY(2px); box-shadow:0 1px 0 #2563eb; }
+.btn:focus-visible{ outline:3px solid #93c5fd; outline-offset:2px; }
+
+.start-btn{ background:var(--green); box-shadow:0 4px 0 #16a34a; width:80%; }
+
+.module-btn{ font-family:var(--font-display); font-size:14px; flex:1 1 40%; margin:6px; }
+.module-btn[data-module="A1"], .module-btn[data-module="A2"]{ background:var(--green); box-shadow:0 4px 0 #16a34a; }
+.module-btn[data-module="B1"], .module-btn[data-module="B2"]{ background:var(--blue); box-shadow:0 4px 0 #2563eb; }
+.module-btn[data-module="C1"], .module-btn[data-module="C2"]{ background:var(--violet); box-shadow:0 4px 0 #6d28d9; }
+.module-btn[data-module="Grammar"], .module-btn[data-module="Pronouns"], .module-btn[data-module="Verbs"]{ background:var(--amber); box-shadow:0 4px 0 #d18f00; color:#4a3200; }
+
+.timer{ font-family:var(--font-display); font-size:14px; color:var(--muted); margin-bottom:6px; }
+#time-bar-container{ width:100%; height:14px; background:#eef1fb; border-radius:10px; overflow:hidden; margin-bottom:12px; }
+#time-bar{ height:100%; width:100%; background:var(--green); transition:width 1s linear, background .5s; border-radius:10px; }
+.lives{ margin-bottom:12px; font-size:20px; }
+
+.question{
+  font-family:var(--font-display); font-size:17px; color:var(--text);
+  background:#f2f6ff; border:2px solid #dce6ff; border-radius:18px; padding:16px; margin:14px 0;
+}
+.options{ display:flex; flex-direction:column; gap:10px; margin-bottom:6px; }
+.options .option{
+  font-family:var(--font-sans); font-weight:600; text-align:left; margin:0;
+  background:#ffffff; color:var(--text); border:2px solid #e3e8f7; padding:13px 16px; border-radius:14px;
+  cursor:pointer; transition:border-color .15s ease, transform .1s ease;
+}
+.options .option:hover:not(:disabled){ border-color:var(--blue); transform:translateX(2px); }
+.options .option:disabled{ cursor:default; }
+
+.controls{ margin-top:14px; display:flex; flex-wrap:wrap; justify-content:center; }
+.controls .btn{ background:#f2f2f2; color:var(--text); box-shadow:0 4px 0 #d6d6d6; font-size:13px; }
+.indicators{ margin-top:16px; font-size:14px; color:var(--muted); font-family:var(--font-display); }
+.indicators #points, .indicators #level{ color:var(--pink); }
+.indicators #qcount, .indicators #qtotal{ color:var(--blue); }
+
+@media (max-width:480px){ h1{font-size:20px;} .btn{font-size:13px;padding:10px 16px;} .question{font-size:16px;} .options .option{font-size:14px;padding:11px;} }
+
+</style>
+</head>
+<body>
+
+<!-- Pantalla de bienvenida -->
+<div class="screen" id="welcome-screen" style="display:block;">
+  <h1>📚 Bienvenido a English Quest</h1>
+<p>Aprende inglés mientras respondes preguntas.<br>Ingresa tu nombre para comenzar:</p>
+  <input type="text" id="player-name" placeholder="Nombre" style="padding:10px; width:80%; border-radius:8px; border:1px solid #ccc; margin-bottom:10px;">
+  <br>
+  <button class="btn start-btn" id="start-btn">Comenzar</button>
+</div>
+
+<!-- Selección de módulo -->
+<div class="screen" id="module-screen">
+  <h1>Elige un módulo</h1>
+  <div style="display:flex; flex-wrap:wrap; justify-content:center;">
+    <button class="btn module-btn" data-module="A1">🟢 A1 - Beginner</button>
+    <button class="btn module-btn" data-module="A2">🟢 A2 - Elementary</button>
+    <button class="btn module-btn" data-module="B1">🔵 B1 - Intermediate</button>
+    <button class="btn module-btn" data-module="B2">🔵 B2 - Upper Intermediate</button>
+    <button class="btn module-btn" data-module="C1">🟣 C1 - Advanced</button>
+    <button class="btn module-btn" data-module="C2">🔴 C2 - Proficiency</button>
+    <button class="btn module-btn" data-module="Grammar">📖 Grammar</button>
+    <button class="btn module-btn" data-module="Pronouns">👤 Pronouns</button>
+    <button class="btn module-btn" data-module="Verbs">📝 Verbs</button>
+  </div>
+</div>
+
+<!-- Pantalla del juego -->
+<div class="screen" id="game-screen">
+  <div class="timer">⏱ Tiempo: <span id="time">25</span>s</div>
+  <div id="time-bar-container"><div id="time-bar"></div></div>
+  <div class="lives" id="lives">❤️ ❤️ ❤️ ❤️ ❤️</div>
+  <div class="question" id="question">Pregunta aparecerá aquí</div>
+<button class="btn" id="repeat-btn" style="background:#8e44ad; color:white; margin-bottom:10px;">🔊 Repetir audio</button>
+  <div class="options">
+    <button class="option" id="option1"></button>
+    <button class="option" id="option2"></button>
+    <button class="option" id="option3"></button>
+    <button class="option" id="option4"></button>
+  </div>
+  <div class="controls">
+    <button class="btn" id="save">💾 Guardar progreso</button>
+    <button class="btn" id="exit">🚪 Salir del juego</button>
+    <button class="btn" id="change">🔄 Cambiar módulo</button>
+    <button class="btn" id="restart">🔄 Reiniciar preguntas</button>
+    <button class="btn" id="next-btn" style="display:none; background:#f39c12; color:white; width:100%; margin-top:10px;">➡️ Siguiente pregunta</button>
+  </div>
+  <div class="indicators">
+    <p>Puntos: <span id="points">0</span> | Nivel: <span id="level">1</span></p>
+    <p>Pregunta <span id="qcount">0</span> de <span id="qtotal">0</span></p>
+  </div>
+</div>
+
+<!-- Vinculación de módulos -->
+<script src="a1.js"></script>
+<script src="a2.js"></script>
+<script src="b1.js"></script>
+<script src="b2.js"></script>
+<script src="c1.js"></script>
+<script src="grammar.js"></script>
+<script src="pronombres.js"></script>
+<script src="verb.js"></script>
+<script src="c2.js"></script>
+
+<script>
+const welcomeScreen = document.getElementById("welcome-screen");
+const moduleScreen = document.getElementById("module-screen");
+const gameScreen = document.getElementById("game-screen");
+const startBtn = document.getElementById("start-btn");
+const moduleBtns = document.querySelectorAll(".module-btn");
+const questionEl = document.getElementById("question");
+const optionBtns = [document.getElementById("option1"), document.getElementById("option2"), document.getElementById("option3"), document.getElementById("option4")];
+const nextBtn = document.getElementById("next-btn");
+const repeatBtn = document.getElementById("repeat-btn");
+const timeEl = document.getElementById("time");
+const timeBar = document.getElementById("time-bar");
+const livesEl = document.getElementById("lives");
+const pointsEl = document.getElementById("points");
+const levelEl = document.getElementById("level");
+const qcountEl = document.getElementById("qcount");
+const qtotalEl = document.getElementById("qtotal");
+const saveBtn = document.getElementById("save");
+const exitBtn = document.getElementById("exit");
+const changeBtn = document.getElementById("change");
+const restartBtn = document.getElementById("restart");
+
+let modules = {
+  "A1": preguntasA1,
+  "A2": preguntasA2,
+  "B1": preguntasB1,
+  "B2": preguntasB2,
+  "C1": preguntasC1,
+  "C2": preguntasC2,
+  "Grammar": preguntasGrammar,
+  "Pronouns": preguntasPronombres,
+  "Verbs": preguntasVerb
+};
+
+let currentModule = "";
+let questions = [];
+let currentIndex = 0;
+let points = 0;
+let level = 1;
+let lives = 5;
+let maxLives = 5;
+let timer;
+let timeLeft = 35;
+let totalTime = 35;
+let playerName = "";
+let currentQuestionData = null;
+
+// 🔊 Función de voz robótica
+function speak(text){
+  if('speechSynthesis' in window){
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-ES";
+    window.speechSynthesis.speak(utterance);
+  }
+}
+
+// 🎵 Sonidos
+let correctSound = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+let wrongSound = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+
+// Funciones de pantalla
+function showScreen(screen){
+  welcomeScreen.style.display="none";
+  moduleScreen.style.display="none";
+  gameScreen.style.display="none";
+  screen.style.display="block";
+}
+
+// 🔹 Guardar progreso (manual, con aviso)
+function guardarProgreso(){
+  autoGuardar();
+  alert("Progreso guardado ✅");
+}
+
+// 🔹 Autoguardado silencioso (sin alerta)
+function autoGuardar(){
+  if(!playerName) return;
+  localStorage.setItem("progreso_" + playerName, JSON.stringify({
+    module: currentModule,
+    idx: currentIndex,
+    points: points,
+    lives: lives,
+    level: level
+  }));
+}
+
+// Juego
+function initGame(moduleName){
+  currentModule = moduleName;
+  questions = [...modules[moduleName]];
+  currentIndex = 0;
+  points = 0;
+  level = 1;
+  lives = maxLives;
+  showScreen(gameScreen);
+  showQuestion();
+}
+
+// 🔹 Actualizar indicadores
+function updateIndicators(){
+  let totalQuestions = questions.length;
+  let questionsAnswered = currentIndex;
+  level = Math.floor((questionsAnswered / totalQuestions) * 5) + 1;
+
+  pointsEl.innerText = points;
+  levelEl.innerText = level;
+  livesEl.innerText="❤️".repeat(lives)+"🤍".repeat(maxLives-lives);
+
+  if(lives<=0){
+    alert("¡Se acabaron tus vidas! El juego se reinicia");
+    showScreen(moduleScreen);
+  }
+}
+
+function shuffleArray(arr){ return arr.sort(()=>Math.random()-0.5); }
+
+function showQuestion(){
+  if(currentIndex >= questions.length){
+    alert("¡Has terminado el módulo "+currentModule+"! Puntos: "+points);
+    showScreen(moduleScreen);
+    return;
+  }
+  nextBtn.style.display = "none";
+  let q = questions[currentIndex];
+  q.opciones = shuffleArray(q.opciones);
+  currentQuestionData = q;
+  qcountEl.innerText = currentIndex + 1;
+  qtotalEl.innerText = questions.length;
+
+  questionEl.innerText = q.pregunta;
+  speak(q.pregunta + ". Opciones: " + q.opciones.join(", "));
+
+  optionBtns.forEach((btn,i)=>{
+    btn.innerText = q.opciones[i];
+    btn.disabled = false;
+    btn.style.backgroundColor = "#2980b9";
+    btn.style.color = "white";
+    btn.onclick = ()=>checkAnswer(btn,q.respuesta);
+  });
+
+  timeLeft = totalTime;
+  timeEl.innerText = timeLeft;
+  updateTimeBar();
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeEl.innerText = timeLeft;
+    updateTimeBar();
+    if(timeLeft<=0){ clearInterval(timer); markWrong(); }
+  },1000);
+}
+
+function checkAnswer(btn, correct){
+  clearInterval(timer);
+  optionBtns.forEach(b => b.disabled = true);
+  if(btn.innerText === correct){
+    points += 10;
+    if(lives < maxLives) lives++;
+    correctSound.play();
+  } else {
+    lives--;
+    btn.style.backgroundColor = "red";
+    wrongSound.play();
+  }
+  optionBtns.forEach(b => { if(b.innerText === correct){ b.style.backgroundColor = "green"; b.style.color = "white"; } });
+  updateIndicators();
+  currentIndex++;
+  autoGuardar();
+  nextBtn.style.display = "block";
+  nextBtn.onclick = ()=>{ showQuestion(); };
+}
+
+function markWrong(){
+  let q = questions[currentIndex];
+  optionBtns.forEach(b=>{
+    b.disabled = true;
+    if(b.innerText === q.respuesta){ b.style.backgroundColor = "green"; b.style.color = "white"; }
+  });
+  lives--;
+  wrongSound.play();
+  updateIndicators();
+  currentIndex++;
+  autoGuardar();
+  nextBtn.style.display = "block";
+  nextBtn.onclick = ()=>{ showQuestion(); };
+}
+
+function updateTimeBar(){
+  let percent = (timeLeft/totalTime)*100;
+  timeBar.style.width = percent+"%";
+  if(timeLeft>15) timeBar.style.background="green";
+  else if(timeLeft>5) timeBar.style.background="orange";
+  else timeBar.style.background="red";
+}
+
+// Eventos
+moduleBtns.forEach(btn=>{ btn.addEventListener("click",()=>{ initGame(btn.dataset.module); }); });
+changeBtn.addEventListener("click",()=>{ autoGuardar(); showScreen(moduleScreen); });
+restartBtn.addEventListener("click",()=>{
+  if(confirm("¿Quieres reiniciar las preguntas de este módulo?")){
+    currentIndex = 0;
+    questions = shuffleArray([...modules[currentModule]]);
+    showQuestion();
+  }
+});
+repeatBtn.addEventListener("click", ()=>{
+  if(currentQuestionData){
+    speak(currentQuestionData.pregunta + ". Opciones: " + currentQuestionData.opciones.join(", "));
+  }
+});
+
+saveBtn.addEventListener("click",()=>guardarProgreso());
+window.addEventListener("beforeunload", ()=>{ autoGuardar(); });
+exitBtn.addEventListener("click",()=>{
+  guardarProgreso();
+  alert("Gracias por jugar!");
+  location.reload();
+});
+
+// 🔹 Start
+startBtn.addEventListener("click", ()=>{
+  const input = document.getElementById("player-name").value.trim();
+  if(!input){ alert("Debes ingresar tu nombre."); return; }
+  playerName = input;
+
+  showScreen(moduleScreen); // Siempre mostrar pantalla de módulos
+
+  let saved = localStorage.getItem("progreso_" + playerName);
+  if(saved){
+    let data = JSON.parse(saved);
+    if(confirm(`¡Bienvenido de nuevo ${playerName}! ¿Deseas continuar tu progreso en "${data.module}"?`)){
+      currentModule = data.module;
+      currentIndex = data.idx;
+      points = data.points;
+      lives = data.lives;
+      level = data.level || 1;
+      questions = [...modules[currentModule]];
+      updateIndicators();
+      showScreen(gameScreen);
+      showQuestion();
+    }
+  }
+});
+</script>
+</body>
+</html>
